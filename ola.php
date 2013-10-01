@@ -20,8 +20,9 @@ class Veiculo {
 
 
     public function __toString() {
-        return 'rodas: '.$this->num_de_rodas. ' cor: '.$this->cor;
+        return json_encode(array(1,2,3));
     }
+
 }
 
 
@@ -41,4 +42,6 @@ echo '<pre>';
 var_dump($m);
 echo '</pre>';
 $m->ligar();
+
+echo $m;
 ?>
