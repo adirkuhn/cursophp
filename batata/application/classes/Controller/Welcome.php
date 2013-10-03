@@ -15,4 +15,20 @@ class Controller_Welcome extends Controller {
         echo 'Olá, você disse: ' . $mensagem;
     }
 
+    public function action_sessao() {
+
+        $session = Session::instance();
+
+        $session->set('user_id', 10);
+        $session->delete('user_id');
+
+        echo $session->get('user_id');
+        echo '<br>';
+        echo $session->get('nome');
+
+        echo '<pre>';
+        print_r($session->as_array());
+
+    }
+
 } // End Welcome
