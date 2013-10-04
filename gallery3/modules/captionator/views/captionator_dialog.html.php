@@ -1,4 +1,5 @@
 <?php defined("SYSPATH") or die("No direct script access.") ?>
+
 <div id="g-captionator-dialog">
   <script type="text/javascript">
     $(document).ready(function() {
@@ -7,6 +8,13 @@
             "<?= url::site("/tags/autocomplete") ?>",
             {max: 30, multiple: true, multipleSeparator: ',', cacheLength: 1});
         });
+
+      // $('form input[name^=filename]').ready(function() {
+      //     $('form input[name^=filename]').gallery_autocomplete(
+      //       "<?= url::site("/tags/autocomplete") ?>",
+      //       {max: 30, multiple: false, multipleSeparator: '', cacheLength: 1});
+      //   });
+
       $('form input[name^=title]').change(function() {
         var title = $(this).val();
         slug = title.replace(/^\'/, "");
@@ -63,15 +71,18 @@
               ?>
                 <!-- campos para dados lat-log //-->
                 <li>
-                  <label for="lat[<?= $child[1]->id ?>]"> <?= t("Latitude") ?> </label>
-                  <input type="text" name="lat[<?= $child[1]->id ?>]" class="ac_input" autocomplete="off" value="<?= $child[1]->latitude ?>"/>
+                  <label for="lat[<?= $child[0]->id ?>]"> <?= t("Latitude") ?> </label>
+                  <input type="text" name="lat[<?= $child[0]->id ?>]" class="ac_input" autocomplete="off" value="<?= $child[1]->latitude ?>"/>
                 </li>
 
                 <!-- campos para dados lat-log //-->
                 <li>
-                  <label for="log[<?= $child[1]->id ?>]"> <?= t("Longitude") ?> </label>
-                  <input type="text" name="log[<?= $child[1]->id ?>]" class="ac_input" autocomplete="off" value="<?= $child[1]->longitude ?>"/>
+                  <label for="log[<?= $child[0]->id ?>]"> <?= t("Longitude") ?> </label>
+                  <input type="text" name="log[<?= $child[0]->id ?>]" class="ac_input" autocomplete="off" value="<?= $child[1]->longitude ?>"/>
                 </li>
+
+                <!-- ABRIR MAPS E PEGAR LOCALIZACAO //-->
+                <a style="cursor:pointer" onclick="chama_modal(<?= $child[0]->id ?>)">Pegar posição no mapa</a>
               <?php
               }
               ?>
@@ -89,3 +100,88 @@
     </fieldset>
   </form>
 </div>
+
+<!--colocar classe css para esconder div modal  //-->
+<div id='modal'>
+    <div id="map-canvas">
+
+    </div>  
+</div>
+
+
+<style type="text/css">
+  #map-canvas {
+    width: 400px;
+    height: 400px;
+    z-index: 0;
+    margin: 0 auto;
+  }
+
+/*  #modal {
+    display: none;
+  }*/
+</style>
+
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=<?php echo $gps_key; ?>&sensor=false"></script>
+
+<? /* <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key=AIzaSyBaPEDyFbbnWjtvT8W3UBOM34Y7g6vK69A&sensor=false"></script> */ ?>
+
+<script type="text/javascript">
+
+var item_id = null;
+function atribui_valores(data) {
+  
+  $('input[name=lat['+item_id+']]').attr('value', data.latLng.lat());
+  $('input[name=log['+item_id+']]').attr('value', data.latLng.lng());
+}
+
+var map;
+var initialize = function() {
+  var mapOptions = {
+    zoom: 8,
+    center: new google.maps.LatLng(-23.934613, -54.014048),
+    mapTypeId: google.maps.MapTypeId.SATELLITE
+  };
+  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+  // google.maps.event.addListener(map, 'click', function(data) {
+  //   //console.log(data.latLng.lat());  
+  //   atribui_valores(data);
+  // });
+
+  var marker = new google.maps.Marker({
+      map: map,
+      draggable: true
+  }); 
+
+  myListener = google.maps.event.addListener(map, 'click', function(event) {
+      atribui_valores(event);
+      marker.setPosition(event.latLng);
+      google.maps.event.removeListener(myListener);
+  });
+  google.maps.event.addListener(marker, 'drag', function(event) {
+      atribui_valores(event);
+      marker.setPosition(event.latLng);
+      //google.maps.event.removeListener(myListener);
+  });
+
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+//procurar por plugin de modal
+//pq a dialog do jquery ui da dando pau (abre somente uma vez) !batata
+$("#modal").dialog({ 
+  autoOpen : false,
+  height: 600,
+  width: 600
+});
+function chama_modal(id) {
+  item_id = id;
+
+  $('#modal').dialog('open');
+  // $('#modal').dialog();
+}
+
+
+</script>

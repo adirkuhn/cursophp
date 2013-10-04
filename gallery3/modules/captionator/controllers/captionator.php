@@ -29,8 +29,10 @@ class Captionator_Controller extends Controller {
 
     //verifica se o modulo exif_gps esta ativo
     $exif_gps = false;
+    $gps_key = "";
     if (module::is_active("exif_gps")) {
       $exif_gps = true;
+      $gps_key = module::get_var("exif_gps", "googlemap_api_key", "");
     }
 
     //$items = $album->viewable()->children()->as_array();
@@ -47,6 +49,7 @@ class Captionator_Controller extends Controller {
       );
     }
 
+
     $v = new Theme_View("page.html", "collection", "captionator");
     $v->content = new View("captionator_dialog.html");
     //$v->content->album = $album;
@@ -55,6 +58,7 @@ class Captionator_Controller extends Controller {
     $v->content->album = $test_albuns;
     //bind variavel para verificar se o modulo esta ativo
     $v->content->exif_gps = $exif_gps;
+    $v->content->gps_key = $gps_key;
     $v->content->enable_tags = module::is_active("tag");
     if ($v->content->enable_tags) {
       $v->content->tags = array();
@@ -83,9 +87,34 @@ class Captionator_Controller extends Controller {
       $internetaddresses = Input::instance()->post("internetaddress");
       $tags = Input::instance()->post("tags");
       $enable_tags = module::is_active("tag");
+
+      $latitudes = Input::instance()->post("lat");
+      $longitudes = Input::instance()->post("log");
+
       foreach (array_keys($titles) as $id) {
         $item = ORM::factory("item", $id);
         if ($item->loaded() && access::can("edit", $item)) {
+
+          //salva informacoes exif gps (lat log)
+          $gps = ORM::factory("EXIF_Coordinate")->where('item_id', '=', $id)->find();
+          if (!empty($latitudes[$id]) && !empty($longitudes[$id])) {
+            //salva informacoes exif gps (lat log)
+            //caso item nao exista cria uma nova entrada
+            if (!$gps->loaded()) {
+              $gps = ORM::factory("EXIF_Coordinate");
+            }
+            $gps->latitude = $latitudes[$id];
+            $gps->longitude = $longitudes[$id];
+            $gps->item_id = $id;
+            $gps->save();
+          }
+          else {
+            if ($gps->loaded()) {
+              $gps->delete();
+            }
+          }
+
+
           $item->title = $titles[$id];
           $item->description = $descriptions[$id];
           $item->name = $filenames[$id];
